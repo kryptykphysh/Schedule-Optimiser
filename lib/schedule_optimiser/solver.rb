@@ -10,6 +10,7 @@ module ScheduleOptimiser
   class Solver
     attr_accessor :max_runtime_seconds
 
+    attr_reader :best_solution
     attr_reader :machines
     attr_reader :run_start_at
     attr_reader :solutions
@@ -18,7 +19,7 @@ module ScheduleOptimiser
       @machines = machines
       @max_runtime_seconds = max_runtime_seconds.second
       @run_start_at = nil
-      @solutions = []
+      @solutions = 0
       return if data_hash.empty?
       @machines = data_hash[:machines].map do |machine|
         Machine.new id: machine[:id],
@@ -26,13 +27,8 @@ module ScheduleOptimiser
       end
     end
 
-    def best_solution
-      return nil if @solutions.empty?
-      @solutions.min_by(&:total_runtime)
-    end
-
     def solve
-      @solutions = []
+      @solutions = 0
       @run_start_at = Time.now
       machine_order_iterator = base_machine_order.permutation.each
       unique_machine_orders = []
@@ -46,10 +42,14 @@ module ScheduleOptimiser
         solution = ScheduleOptimiser::Solution.new(
           machine_order: next_machine_order.map { |id| machine_id_map[id].deep_dup }
         )
-        @solutions << solution
+        @solutions += 1
+        if @best_solution.nil? || solution.total_runtime < @best_solution.total_runtime
+          @best_solution = solution
+        end
         unique_machine_orders << next_machine_order
       end
-      best_solution
+      pp "Solutions: #{@solutions}\nBest Solution: #{@best_solution.total_runtime}\n" \
+        "Steps: #{@best_solution.steps}"
     end
 
     private

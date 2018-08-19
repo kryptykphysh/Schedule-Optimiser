@@ -42,6 +42,7 @@ module ScheduleOptimiser
         auto_time: final_wait_time
       )
       @current_runtime = wait_task.auto_end_at
+      @next_manual_available = wait_task.auto_end_at
       steps << ScheduleOptimiser::SolutionStep.new(task: wait_task)
     end
 
@@ -65,10 +66,11 @@ module ScheduleOptimiser
       wait_task = ScheduleOptimiser::Task.new(
         id: 'WAIT',
         start_at: start_at,
-        auto_time: start_at - @current_runtime
+        manual_time: start_at - @current_runtime
       )
       @steps << ScheduleOptimiser::SolutionStep.new(task: wait_task)
       @current_runtime = wait_task.auto_end_at
+      @next_manual_available = wait_task.manual_end_at
       tracker[:next_auto_available] = @current_runtime
     end
 
